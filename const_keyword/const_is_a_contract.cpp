@@ -4,20 +4,15 @@
 
 #include <iostream>
 
-/* Define a global int for experimental purposes. */
+/* Define a global int variable for experimental purposes. */
 int global = 2;
 
-/* A function taking a reference to a const int. */
-/* That is, we promise to not modify the variable arg. */
-void taking_const_ref(const int& arg)
-{
-    printf("%d ", arg);
-    //arg = 3 // Compiler error because of the promise
-    global = 3;
-    printf("%d\n", arg);
-}
+/* Forward declarations */
+void taking_const_ref(const int& arg);
+void post_increment(int& arg);
+void do_nothing(const int& arg);
 
-int main()
+int main(int argc, char **argv)
 {
     /* cint -defined as const- is truly const, no matter what. */
     const int cint = 47;
@@ -28,7 +23,7 @@ int main()
     /* In fact, it's not allowed to const_cast a variable if the variable is actually const. 
     Refer to this stackoverflow answer: https://stackoverflow.com/a/19554871/3160184 */
     const_cast<int&>(cint) = 7; // Undefined behaviour
-    std::cout << "cint: " << cint << std::endl;
+    std::cout << "[Undefined behaviour] cint: " << cint << std::endl;
 
     //int *p_cint = &cint; // Compiler error
     //const int *p_cint = &cint; // Okay
@@ -54,5 +49,61 @@ int main()
     taking_const_ref(global);
     std::cout << "global after func call: " << global << std::endl;
 
+    /*
+     * About the placement of const keyword
+     * ------------------------------------
+     * 
+     * An excerpt from https://quuxplusone.github.io/blog/2019/01/03/const-is-a-contract/:
+     * 
+     * -- Pointers behave just like references in this respect --
+     * 
+     * When we take a function parameter of type const int *, we’re saying “Please give me
+     * the address of an int, and I promise not to modify that int.”
+     * 
+     * And the const can apply at each different level, independently:
+     * When we take a function parameter of type const int **, we’re saying “Please give me
+     * a pointer to an int*, and I promise not to modify the int it points to (but I might
+     * modify the int* itself).”
+     * 
+     * When we take a function parameter of type int *const *, we’re saying “Please give me
+     * a pointer to a pointer to an int, and I promise not to modify that int* (but I might
+     * modify the int it points to).”
+     * 
+     * When we take a function parameter of type const int *const *, we’re saying “Please
+     * give me a pointer to an int*, and I promise not to modify either the int* or the int
+     * it points to.”
+     * 
+     * (Very minor handwaving here: “pointer to int*” and “pointer to const int*” are actually
+     * different types, and behave according to covariance and contravariance, which is fun
+     * times. Intrepid readers can find more details in http://eel.is/c++draft/conv.qual#3,
+     * until I find a better explanation to link to.)
+     */
+
     return 0;
 }
+
+/* A function taking a reference to a const int. */
+/* That is, we promise to not modify the variable arg. */
+void taking_const_ref(const int& arg)
+{
+    printf("%d ", arg);
+    //arg = 3 // Compiler error because of the promise
+
+    /* We can strip away the constness because the underlying variable isn't actually const. */
+    const_cast<int&>(arg) = 3;
+    printf("%d ", arg);
+
+    global = 5;
+    printf("%d\n", arg);
+
+    //post_increment(arg); // Compiler error because this function modifies arg
+    //do_nothing(arg); // Okay because this function promises not to modify arg
+}
+
+void post_increment(int& arg)
+{
+    arg++;
+}
+
+/* This function also promises not to modify its argument. */
+void do_nothing(const int& arg){}
