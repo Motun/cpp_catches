@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 
     /* Prefer "int const" declaration to "const int" because it'll be easier to figure out
     what is const and what isn't. Look to the left of the const keyword, that is the const. */
-    int const *p_intc = &cint; // Pointer to a constant integer, this is okay
+    int const* p_intc = &cint; // Pointer to a constant integer, this is okay
     std::cout << "Value pointed by p_intc: " << *p_intc << std::endl;
     //*p_intc = 7; // Compiler error
 
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     p_intc = &new_cint; // Okay, the pointer itself isn't const
     std::cout << "Value pointed by p_intc: " << *p_intc << std::endl;
 
-    int * const pc_int = &global;
+    int* const pc_int = &global;
     std::cout << "Value pointed by pc_int: " << *pc_int << std::endl;
     *pc_int = 6; // Okay
     std::cout << "Value pointed by pc_int: " << *pc_int << std::endl;
